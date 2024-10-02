@@ -92,7 +92,16 @@ void Queue_Error( int error_code ) {
  * @param queue Ukazatel na strukturu fronty
  */
 void Queue_Init( Queue *queue ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	if (queue == NULL) {
+		Queue_Error(QERR_INIT);
+		return;	
+	}
+
+	queue->firstIndex = 0;
+	queue->freeIndex = 0;
+
+	for (int i = 0; i < QUEUE_SIZE; i++)
+		queue->array[i] = '*';
 }
 
 /**
@@ -103,8 +112,7 @@ void Queue_Init( Queue *queue ) {
  * @param index Aktuální index
  */
 int nextIndex( int index ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
-	return 0;
+	return (index + 1) % QUEUE_SIZE;
 }
 
 /**
@@ -114,8 +122,7 @@ int nextIndex( int index ) {
  * @param queue Ukazatel na inicializovanou strukturu fronty
  */
 int Queue_IsEmpty( const Queue *queue ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
-	return 0;
+	return (queue->firstIndex == queue->freeIndex);
 }
 
 /**
@@ -126,8 +133,7 @@ int Queue_IsEmpty( const Queue *queue ) {
  * @param queue Ukazatel na inicializovanou strukturu fronty
  */
 int Queue_IsFull( const Queue *queue ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
-	return 0;
+	return (queue->firstIndex == nextIndex(queue->freeIndex));
 }
 
 /**
@@ -144,7 +150,12 @@ int Queue_IsFull( const Queue *queue ) {
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
 void Queue_Front( const Queue *queue, char *dataPtr ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	if (Queue_IsEmpty(queue)) {
+		Queue_Error(QERR_FRONT);
+		return;	
+	}
+
+	*dataPtr = queue->array[queue->firstIndex];
 }
 
 /**
@@ -156,7 +167,12 @@ void Queue_Front( const Queue *queue, char *dataPtr ) {
  * @param queue Ukazatel na inicializovanou strukturu fronty
  */
 void Queue_Remove( Queue *queue ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	if (Queue_IsEmpty(queue)) {
+		Queue_Error(QERR_REMOVE);
+		return;	
+	}
+
+	queue->firstIndex = nextIndex(queue->firstIndex);
 }
 
 /**
@@ -170,7 +186,13 @@ void Queue_Remove( Queue *queue ) {
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
 void Queue_Dequeue( Queue *queue, char *dataPtr ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	if (Queue_IsEmpty(queue)) {
+		Queue_Error(QERR_DEQUEUE);
+		return;	
+	}
+
+	Queue_Front(queue, dataPtr);
+	Queue_Remove(queue);
 }
 
 /**
@@ -186,7 +208,12 @@ void Queue_Dequeue( Queue *queue, char *dataPtr ) {
  * @param data Znak k vložení
  */
 void Queue_Enqueue( Queue *queue, char data ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	if (Queue_IsFull(queue)) {
+		Queue_Error(QERR_ENQUEUE);
+		return;	
+	}
+
+	queue->array[queue->freeIndex++] = data;
 }
 
 /* Konec příkladu c203.c */

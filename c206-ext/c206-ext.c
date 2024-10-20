@@ -28,7 +28,49 @@ bool solved;
  * @param packet Ukazatel na strukturu přijatého paketu
  */
 void receive_packet( DLList *packetLists, PacketPtr packet ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	bool priorityFound = false;
+	QosPacketListPtr priorityListPtr;
+	
+	DLL_First(packetLists);
+	while (DLL_IsActive(packetLists)) {
+		priorityListPtr = (QosPacketListPtr)packetLists->activeElement->data;
+
+		if (priorityListPtr->priority == packet->priority) {
+			priorityFound = true;
+			break;
+		}
+		
+		DLL_Next(packetLists);
+	}
+	
+	if (!priorityFound) {
+		priorityListPtr = malloc(sizeof(QosPacketList));
+		if (priorityListPtr == NULL) {
+			error_flag = true;
+			return;
+		}
+
+		priorityListPtr->list = malloc(sizeof(DLList));
+		if (priorityListPtr->list == NULL) {
+			error_flag = true;
+			return;
+		}
+
+		priorityListPtr->priority = packet->priority;
+		DLL_InsertFirst(packetLists, (long)priorityListPtr);
+		DLL_Init(priorityListPtr->list);
+	}
+
+	DLL_InsertFirst(priorityListPtr->list, (long)packet);
+
+	if (priorityListPtr->list->currentLength > MAX_PACKET_COUNT) {
+		DLL_First(priorityListPtr->list);
+
+		while (DLL_IsActive(priorityListPtr->list)) {
+			DLL_DeleteAfter(priorityListPtr->list);
+			DLL_Next(priorityListPtr->list);
+		}
+	}
 }
 
 /**
@@ -47,5 +89,31 @@ void receive_packet( DLList *packetLists, PacketPtr packet ) {
  * @param maxPacketCount Maximální počet paketů k odeslání
  */
 void send_packets( DLList *packetLists, DLList *outputPacketList, int maxPacketCount ) {
-	solved = false; /* V případě řešení, smažte tento řádek! */
+	int packetSentCount = 0;
+
+	while (packetSentCount <= maxPacketCount) {
+		DLL_First(packetLists);
+		int highestPriority = -(__INT8_MAX__);
+		QosPacketListPtr highestPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
+		QosPacketListPtr currentPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
+
+		while (DLL_IsActive(packetLists)) {
+			currentPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
+
+			if (currentPriorityList->priority >= highestPriority && 
+				currentPriorityList->list->currentLength != 0) 
+			{
+				highestPriorityList = currentPriorityList;
+				highestPriority = highestPriorityList->priority;
+			}
+				
+			DLL_Next(packetLists);
+		}
+
+		if (highestPriorityList == NULL || highestPriorityList->list->currentLength == 0) break;
+
+		DLL_InsertLast(outputPacketList, (long)highestPriorityList->list->lastElement->data);
+		DLL_DeleteLast(highestPriorityList->list);
+		packetSentCount++;
+	}
 }

@@ -16,11 +16,11 @@ int MAX_PACKET_COUNT = 10;
 TEST(test_receive_send, "Přijetí a odeslání jednoho packetu")
 	DLL_Init(test_queue_list);
 	DLL_Init(test_output_list);
-
+	
 	Packet packet = { .id = 1, .priority = 0 };
 	receive_packet(test_queue_list, &packet);
 	send_packets(test_queue_list, test_output_list, 1);
-
+	
 	test_print_current_queue_count(test_queue_list);
 	test_print_list_of_packets(test_output_list);
 ENDTEST

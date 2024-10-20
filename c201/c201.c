@@ -64,6 +64,7 @@ void List_Error(void) {
  * @param list Ukazatel na strukturu jednosměrně vázaného seznamu
  */
 void List_Init( List *list ) {
+	// Iniciliaze inner variable
 	list->firstElement = NULL;
 	list->activeElement = NULL;
 	list->currentLength = 0;
@@ -78,7 +79,8 @@ void List_Init( List *list ) {
  **/
 void List_Dispose( List *list ) {
 	List_First(list);
-
+	
+	// Delete first element until empty
 	while (list->currentLength > 0) {
 		List_DeleteFirst(list);
 	}
@@ -93,14 +95,17 @@ void List_Dispose( List *list ) {
  * @param data Hodnota k vložení na začátek seznamu
  */
 void List_InsertFirst( List *list, int data ) {
+	// Backup first pointer
 	ListElementPtr firstElementBackup = list->firstElement;
 
+	// Allocate memory for new element
 	list->firstElement = malloc(sizeof(struct ListElement));
 	if (list->firstElement == NULL) {
 		List_Error();
 		return;
 	}
 
+	// Rewire pointers
 	list->firstElement->nextElement = firstElementBackup;
 	list->firstElement->data = data;
 	list->currentLength++;
@@ -129,6 +134,7 @@ void List_GetFirst( List *list, int *dataPtr ) {
 		return;
 	}
 
+	// Set data
 	*dataPtr = list->firstElement->data;
 }
 
@@ -143,6 +149,7 @@ void List_DeleteFirst( List *list ) {
 	if (list->firstElement == NULL) return;
 	if (list->firstElement == list->activeElement) list->activeElement = NULL;
 
+	// Backup first element and set new first element
 	ListElementPtr firstElementBackup = list->firstElement;
 	list->firstElement = list->firstElement->nextElement;
 
@@ -159,9 +166,14 @@ void List_DeleteFirst( List *list ) {
  */
 void List_DeleteAfter( List *list ) {
 	if (list->activeElement == NULL) return;
+
+	// Backup element to delete
 	ListElementPtr elementToDelete = list->activeElement->nextElement;
 
+	// Return if we are at the end of the list
 	if (elementToDelete == NULL) return;
+
+	// Rewire pointers
 	list->activeElement->nextElement = elementToDelete->nextElement;
 	free(elementToDelete);
 	list->currentLength--;
@@ -179,12 +191,14 @@ void List_DeleteAfter( List *list ) {
 void List_InsertAfter( List *list, int data ) {
 	if (list->activeElement == NULL) return;
 
+	// Allocate memory for new element
 	ListElementPtr newElement = malloc(sizeof(struct ListElement));
 	if (newElement == NULL) {
 		List_Error();
 		return;
 	}
 
+	// Rewire pointers
 	newElement->nextElement = list->activeElement->nextElement;
 	list->activeElement->nextElement = newElement;
 	newElement->data = data;
@@ -204,6 +218,7 @@ void List_GetValue( List *list, int *dataPtr ) {
 		return;
 	}
 
+	// Set data
 	*dataPtr = list->activeElement->data;
 }
 
@@ -217,6 +232,7 @@ void List_GetValue( List *list, int *dataPtr ) {
 void List_SetValue( List *list, int data ) {
 	if (list->activeElement == NULL) return;
 
+	// Set data
 	list->activeElement->data = data;
 }
 
@@ -230,6 +246,7 @@ void List_SetValue( List *list, int data ) {
 void List_Next( List *list ) {
 	if (list->activeElement == NULL) return;
 
+	// Move to next element
 	list->activeElement = list->activeElement->nextElement;
 }
 
@@ -240,7 +257,7 @@ void List_Next( List *list ) {
  * @param list Ukazatel na inicializovanou strukturu jednosměrně vázaného seznamu
  */
 int List_IsActive( List *list ) {
-	return (list->activeElement != NULL);
+	return (list->activeElement != NULL); // Just compare to NULL
 }
 
 /* Konec c201.c */

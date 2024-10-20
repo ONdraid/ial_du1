@@ -31,6 +31,7 @@ void receive_packet( DLList *packetLists, PacketPtr packet ) {
 	bool priorityFound = false;
 	QosPacketListPtr priorityListPtr;
 	
+	// Check if list with given priority is iniciliazed
 	DLL_First(packetLists);
 	while (DLL_IsActive(packetLists)) {
 		priorityListPtr = (QosPacketListPtr)packetLists->activeElement->data;
@@ -43,6 +44,7 @@ void receive_packet( DLList *packetLists, PacketPtr packet ) {
 		DLL_Next(packetLists);
 	}
 	
+	// If not, initialize it
 	if (!priorityFound) {
 		priorityListPtr = malloc(sizeof(QosPacketList));
 		if (priorityListPtr == NULL) {
@@ -61,8 +63,10 @@ void receive_packet( DLList *packetLists, PacketPtr packet ) {
 		DLL_Init(priorityListPtr->list);
 	}
 
+	// Insert packet address to the list
 	DLL_InsertFirst(priorityListPtr->list, (long)packet);
 
+	// If list exceeds the maximum packet count, remove every second packet
 	if (priorityListPtr->list->currentLength > MAX_PACKET_COUNT) {
 		DLL_First(priorityListPtr->list);
 
@@ -91,12 +95,14 @@ void receive_packet( DLList *packetLists, PacketPtr packet ) {
 void send_packets( DLList *packetLists, DLList *outputPacketList, int maxPacketCount ) {
 	int packetSentCount = 0;
 
+	// Send packets by priority until max packet count is reached or no packets are left
 	while (packetSentCount <= maxPacketCount) {
 		DLL_First(packetLists);
 		int highestPriority = -(__INT8_MAX__);
 		QosPacketListPtr highestPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
 		QosPacketListPtr currentPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
 
+		// Find the highest priority packet list, non-empty if possible
 		while (DLL_IsActive(packetLists)) {
 			currentPriorityList = (QosPacketListPtr)packetLists->activeElement->data;
 
@@ -110,10 +116,15 @@ void send_packets( DLList *packetLists, DLList *outputPacketList, int maxPacketC
 			DLL_Next(packetLists);
 		}
 
+		// If no packets are left or packetList is empty, break
 		if (highestPriorityList == NULL || highestPriorityList->list->currentLength == 0) break;
 
+		// Send the highest priority packet
 		DLL_InsertLast(outputPacketList, (long)highestPriorityList->list->lastElement->data);
+
+		// And remove it from the list
 		DLL_DeleteLast(highestPriorityList->list);
+		
 		packetSentCount++;
 	}
 }

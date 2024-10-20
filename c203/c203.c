@@ -97,9 +97,11 @@ void Queue_Init( Queue *queue ) {
 		return;	
 	}
 
+	// Initialize inner variables
 	queue->firstIndex = 0;
 	queue->freeIndex = 0;
 
+	// Set every element to '*'
 	for (int i = 0; i < QUEUE_SIZE; i++)
 		queue->array[i] = '*';
 }
@@ -122,7 +124,7 @@ int nextIndex( int index ) {
  * @param queue Ukazatel na inicializovanou strukturu fronty
  */
 int Queue_IsEmpty( const Queue *queue ) {
-	return (queue->firstIndex == queue->freeIndex);
+	return (queue->firstIndex == queue->freeIndex); // If start == end, queue is empty
 }
 
 /**
@@ -133,7 +135,7 @@ int Queue_IsEmpty( const Queue *queue ) {
  * @param queue Ukazatel na inicializovanou strukturu fronty
  */
 int Queue_IsFull( const Queue *queue ) {
-	return (queue->firstIndex == nextIndex(queue->freeIndex));
+	return (queue->firstIndex == nextIndex(queue->freeIndex)); // If next start == end, queue is full
 }
 
 /**
@@ -155,6 +157,7 @@ void Queue_Front( const Queue *queue, char *dataPtr ) {
 		return;	
 	}
 
+	// Set data
 	*dataPtr = queue->array[queue->firstIndex];
 }
 
@@ -172,6 +175,7 @@ void Queue_Remove( Queue *queue ) {
 		return;	
 	}
 
+	// Move to next element
 	queue->firstIndex = nextIndex(queue->firstIndex);
 }
 
@@ -191,8 +195,8 @@ void Queue_Dequeue( Queue *queue, char *dataPtr ) {
 		return;	
 	}
 
-	Queue_Front(queue, dataPtr);
-	Queue_Remove(queue);
+	Queue_Front(queue, dataPtr); // Set data
+	Queue_Remove(queue); // And remove
 }
 
 /**
@@ -213,6 +217,7 @@ void Queue_Enqueue( Queue *queue, char data ) {
 		return;	
 	}
 
+	// Set data and increment free index afterwards
 	queue->array[queue->freeIndex++] = data;
 }
 

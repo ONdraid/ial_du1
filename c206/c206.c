@@ -79,6 +79,7 @@ void DLL_Error(void) {
  * @param list Ukazatel na strukturu dvousměrně vázaného seznamu
  */
 void DLL_Init( DLList *list ) {
+	// Initialize inner variables
 	list->activeElement = NULL;
 	list->firstElement = NULL;
 	list->lastElement = NULL;
@@ -93,12 +94,14 @@ void DLL_Init( DLList *list ) {
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
 void DLL_Dispose( DLList *list ) {
+	// Free all elements "backwards"
 	while (list->lastElement != NULL)
 	{
 		DLLElementPtr toDelete = list->lastElement;
 		list->lastElement = list->lastElement->previousElement;
 		free(toDelete);
 	}
+	// And reset inner variables
 	list->firstElement = NULL;
 	list->activeElement = NULL;
 	list->currentLength = 0;
@@ -118,16 +121,20 @@ void DLL_InsertFirst( DLList *list, long data ) {
 		DLL_Error();
 		return;
 	}
+
+	// Set new element data
 	newElem->data = data;
 
+	// Set new element pointers
 	newElem->nextElement = list->firstElement;
 	newElem->previousElement = NULL;
 
 	if (list->firstElement != NULL)
-		list->firstElement->previousElement = newElem;
+		list->firstElement->previousElement = newElem; // If there is a first element, rewire its previous pointer
 	else
-		list->lastElement = newElem;
+		list->lastElement = newElem; // Otherwise, set new element as the last element
 
+	// Set new element as the first element and increment the length
 	list->firstElement = newElem;
 	list->currentLength++;
 }
@@ -146,16 +153,20 @@ void DLL_InsertLast( DLList *list, long data ) {
 		DLL_Error();
 		return;
 	}
+	
+	// Set new element data
 	newElem->data = data;
 
+	// Set new element pointers
 	newElem->nextElement = NULL;
 	newElem->previousElement = list->lastElement;
 
 	if (list->lastElement != NULL)
-		list->lastElement->nextElement = newElem;
+		list->lastElement->nextElement = newElem; // If there is a last element, rewire its next pointer
 	else
-		list->firstElement = newElem;
+		list->firstElement = newElem; // Otherwise, set new element as the first element
 
+	// Set new element as the last element and increment the length
 	list->lastElement = newElem;
 	list->currentLength++;
 }
@@ -195,6 +206,7 @@ void DLL_GetFirst( DLList *list, long *dataPtr ) {
 		return;
 	}
 	
+	// Set data
 	*dataPtr = list->firstElement->data;
 }
 
@@ -211,6 +223,7 @@ void DLL_GetLast( DLList *list, long *dataPtr ) {
 		return;
 	}
 	
+	// Set data
 	*dataPtr = list->lastElement->data;
 }
 
@@ -225,12 +238,16 @@ void DLL_DeleteFirst( DLList *list ) {
 	if (list->firstElement == NULL)	return;
 	if (list->firstElement == list->activeElement) list->activeElement = NULL;
 
+	// Backup first element
 	DLLElementPtr firstBackup = list->firstElement;
+	// Set first element
 	list->firstElement = list->firstElement->nextElement;
 	
+	// If list is not empty, rewire the new first element
 	if (list->firstElement != NULL) list->firstElement->previousElement = NULL;
-	else list->lastElement = NULL;
+	else list->lastElement = NULL; // Otherwise, set last element to NULL
 
+	// Free element and decrement the length
 	free(firstBackup);
 	list->currentLength--;
 }
@@ -246,12 +263,17 @@ void DLL_DeleteLast( DLList *list ) {
 	if (list->lastElement == NULL)	return;
 	if (list->lastElement == list->activeElement) list->activeElement = NULL;
 
+	// Backup last element
 	DLLElementPtr lastBackup = list->lastElement;
+
+	// Set last element
 	list->lastElement = list->lastElement->previousElement;
 
+	// If list is not empty, rewire the new last element
 	if (list->lastElement != NULL) list->lastElement->nextElement = NULL;
-	else list->firstElement = NULL;
+	else list->firstElement = NULL; // Otherwise, set first element to NULL
 
+	// Free element and decrement the length
 	free(lastBackup);
 	list->currentLength--;
 }
@@ -264,14 +286,20 @@ void DLL_DeleteLast( DLList *list ) {
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
 void DLL_DeleteAfter( DLList *list ) {
+	// If list is not active or empty, return
 	if (list->activeElement == NULL || list->activeElement == list->lastElement) return;
 
+	// Backup element to delete
 	DLLElementPtr toDelete = list->activeElement->nextElement;
+
+	// Rewire pointers
 	list->activeElement->nextElement = toDelete->nextElement;
 
+	// If there is a next element, rewire its previous pointer
 	if (toDelete->nextElement != NULL) toDelete->nextElement->previousElement = list->activeElement;
-	else list->lastElement = list->activeElement;
+	else list->lastElement = list->activeElement; // Otherwise, set last element to active element
 
+	// Free element and decrement the length
 	free(toDelete);
 	list->currentLength--;
 }
@@ -284,14 +312,20 @@ void DLL_DeleteAfter( DLList *list ) {
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
 void DLL_DeleteBefore( DLList *list ) {
+	// If list is not active or empty, return
 	if (list->activeElement == NULL || list->activeElement == list->firstElement) return;
 
+	// Backup element to delete
 	DLLElementPtr toDelete = list->activeElement->previousElement;
+
+	// Rewire pointers
 	list->activeElement->previousElement = toDelete->previousElement;
 
+	// If there is a previous element, rewire its next pointer
 	if (toDelete->previousElement != NULL) toDelete->previousElement->nextElement = list->activeElement;
-	else list->firstElement = list->activeElement;
+	else list->firstElement = list->activeElement; // Otherwise, set first element to active element
 
+	// Free element and decrement the length
 	free(toDelete);
 	list->currentLength--;
 }
@@ -308,22 +342,27 @@ void DLL_DeleteBefore( DLList *list ) {
 void DLL_InsertAfter( DLList *list, long data ) {
 	if (list->activeElement == NULL) return;
 
+	// Allocate memory for new element
 	DLLElementPtr newElem = malloc(sizeof(struct DLLElement));
 	if (newElem == NULL) {
 		DLL_Error();
 		return;
 	}
+
+	// Set its data
 	newElem->data = data;
 
+	// Rewire pointers
 	DLLElementPtr nextBackup = list->activeElement->nextElement;
 	list->activeElement->nextElement = newElem;
 	newElem->previousElement = list->activeElement;
 	newElem->nextElement = nextBackup;
 
+	// If there is a next element, rewire its previous pointer
 	if (nextBackup != NULL) nextBackup->previousElement = newElem;
-	else list->lastElement = newElem;
+	else list->lastElement = newElem; // Otherwise, set last element to new element
 
-	list->currentLength++;
+	list->currentLength++; // Increment the length
 }
 
 /**
@@ -338,22 +377,27 @@ void DLL_InsertAfter( DLList *list, long data ) {
 void DLL_InsertBefore( DLList *list, long data ) {
 	if (list->activeElement == NULL) return;
 
+	// Allocate memory for new element
 	DLLElementPtr newElem = malloc(sizeof(struct DLLElement));
 	if (newElem == NULL) {
 		DLL_Error();
 		return;
 	}
+
+	// Set its data
 	newElem->data = data;
 
+	// Rewire pointers
 	DLLElementPtr previousBackup = list->activeElement->previousElement;
 	list->activeElement->previousElement = newElem;
 	newElem->nextElement = list->activeElement;
 	newElem->previousElement = previousBackup;
 
+	// If there is a previous element, rewire its next pointer
 	if (previousBackup != NULL) previousBackup->nextElement = newElem;
-	else list->firstElement = newElem;
+	else list->firstElement = newElem; // Otherwise, set first element to new element
 
-	list->currentLength++;
+	list->currentLength++; // Increment the length
 }
 
 /**
@@ -369,6 +413,7 @@ void DLL_GetValue( DLList *list, long *dataPtr ) {
 		return;
 	}
 
+	// Set data
 	*dataPtr = list->activeElement->data;
 }
 
@@ -382,6 +427,7 @@ void DLL_GetValue( DLList *list, long *dataPtr ) {
 void DLL_SetValue( DLList *list, long data ) {
 	if (list->activeElement == NULL) return;
 
+	// Set data
 	list->activeElement->data = data;
 }
 
@@ -395,6 +441,7 @@ void DLL_SetValue( DLList *list, long data ) {
 void DLL_Next( DLList *list ) {
 	if (list->activeElement == NULL) return;
 
+	// Move to the next element
 	list->activeElement = list->activeElement->nextElement;
 }
 
@@ -409,6 +456,7 @@ void DLL_Next( DLList *list ) {
 void DLL_Previous( DLList *list ) {
 	if (list->activeElement == NULL) return;
 
+	// Move to the previous element
 	list->activeElement = list->activeElement->previousElement;
 }
 
